@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "moudilu-audio-controller"
+version = "0.1.0"
+description = "Control audio output devices with their ALSA device and via remote."
+authors = ["Moudilu"]
+readme = "README.md"
+packages = [{include = "moudilu"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
