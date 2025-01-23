@@ -1,0 +1,21 @@
+name: moudilu.audio_controller
+
+on: [push, pull_request]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    name: Pre-commit hooks
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v4
+      - name: Check formatting with black
+        uses: psf/black@stable
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+        
+              
