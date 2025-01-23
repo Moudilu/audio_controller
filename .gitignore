@@ -1,2 +1,4 @@
 # Ignore the official recommendation to commit the lockfile, follow popular advice instead
 poetry.lock
+
+__pycache__
