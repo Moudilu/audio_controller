@@ -12,6 +12,7 @@ audio_controller = "moudilu.audio_controller.audio_controller:main"
 [tool.poetry.dependencies]
 python = "^3.11"
 argparse = "^1.4.0"
+lirc = "^3.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
