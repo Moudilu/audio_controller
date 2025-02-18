@@ -1,6 +1,8 @@
 from asyncio import sleep
 from logging import getLogger
 
+from psutil import NoSuchProcess, AccessDenied, Process
+
 from .event_router import Event, router
 
 
@@ -19,6 +21,9 @@ class PcmMonitor:
         self.device = device
         self.subdevice = subdevice
         self.device_name = f"{device}.{subdevice}"
+        self._status_file = (
+            f"/proc/asound/{self.device}/pcm0p/sub{self.subdevice}/status"
+        )
 
         self._router = router
         self._logger = getLogger(self.device_name)
@@ -52,7 +57,9 @@ class PcmMonitor:
             self._router.fire_event(Event.PLAYBACK_STOP, f"{self.device} PCM device")
         else:
             self._logger.info(
-                "Detected start of playback on %s PCM device", self.device_name
+                "Process '%s' started playback on %s PCM device",
+                self.get_playing_process(),
+                self.device_name,
             )
             self._router.fire_event(Event.PLAYBACK_START, f"{self.device} PCM device")
 
@@ -62,9 +69,32 @@ class PcmMonitor:
         Returns true if the state of this device is closed.
         Otherwhise (running, closing, ...) returns false.
         """
-        with open(
-            f"/proc/asound/{self.device}/pcm0p/sub{self.subdevice}/status", "r"
-        ) as soundStatusfile:
+        with open(self._status_file, "r") as soundStatusfile:
             status = soundStatusfile.readline().strip("\n")
         self._logger.debug("%s status: %s", self.device_name, status)
         return status == "closed"
+
+    def get_playing_process(self) -> str:
+        """Gets the process currently playing on this device
+
+        :returns: Commandline of the process currently playing on this device.
+                  'UNKNOWN' if nothing is playing.
+        """
+        with open(self._status_file, "r") as soundStatusfile:
+            for line in soundStatusfile:
+                if line.startswith("owner_pid"):
+                    # Expect this line in the second line in format "owner_pid   : 615"
+                    try:
+                        tid = int(line.split(":")[-1].strip())
+                        cmd = Process(tid).cmdline()
+                        return " ".join(cmd)
+                    except ValueError:
+                        self._logger.exception(
+                            "Failed to read PID from line '%s'", line
+                        )
+                    except (NoSuchProcess, AccessDenied):
+                        self._logger.exception(
+                            "Failed to get info of process from line '%s'", line
+                        )
+
+        return "UNKNOWN"
