@@ -1,9 +1,9 @@
-from asyncio import sleep
+from asyncio import sleep, get_running_loop
 from logging import getLogger
 
 from psutil import NoSuchProcess, AccessDenied, Process
 
-from .event_router import Event, router
+from ..event_router import Event, router
 
 
 class PcmMonitor:
@@ -27,6 +27,9 @@ class PcmMonitor:
 
         self._router = router
         self._logger = getLogger(self.device_name)
+
+        # Instantiate the monitoring task
+        get_running_loop().create_task(self.monitor())
 
     async def monitor(self) -> None:
         """Runs infinite loop

@@ -4,7 +4,7 @@ from typing import Union
 
 from lirc import Client
 
-from .event_router import Event, router
+from ..event_router import Event, router
 
 
 class HK970:

@@ -3,10 +3,10 @@
 import logging
 
 from argparse import ArgumentParser
-from asyncio import TaskGroup, run
+from asyncio import run, get_running_loop
 
-from .pcm_monitor import PcmMonitor
-from .hk970 import HK970
+from .devices.pcm_monitor import PcmMonitor
+from .devices.hk970 import HK970
 
 
 def main() -> None:
@@ -24,20 +24,18 @@ def main() -> None:
 
     logger = logging.getLogger()
 
-    # Instantiate all devices
-    pcm = PcmMonitor("E30")
-    HK970()
+    async def init():
+        # Instantiate all devices
+        PcmMonitor("E30")
+        HK970()
+
+        # handover to the event loop, let the magic happen
+        await get_running_loop().create_future()
 
     # Run the loop
-    run(runner(pcm.monitor()))
+    run(init())
 
     logger.error("Loop exited unexpectedly. Stop audio controller.")
-
-
-async def runner(*args):
-    async with TaskGroup() as tg:
-        for coro in args:
-            tg.create_task(coro)
 
 
 if __name__ == "main":
