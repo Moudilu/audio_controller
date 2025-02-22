@@ -4,7 +4,7 @@ from typing import Union
 
 from lirc import Client
 
-from ..event_router import Event, router
+from ..event_router import Event, get_event_router
 
 
 class HK970:
@@ -22,7 +22,7 @@ class HK970:
     def __init__(self) -> None:
         self._lirc = Client()
 
-        router.add_listener(self.process_events)
+        get_event_router().add_listener(self.process_events)
 
         self._logger = getLogger("HK970")
 

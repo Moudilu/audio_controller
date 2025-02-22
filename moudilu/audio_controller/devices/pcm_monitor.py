@@ -3,7 +3,7 @@ from logging import getLogger
 
 from psutil import NoSuchProcess, AccessDenied, Process
 
-from ..event_router import Event, router
+from ..event_router import Event, get_event_router
 
 
 class PcmMonitor:
@@ -25,7 +25,7 @@ class PcmMonitor:
             f"/proc/asound/{self.device}/pcm0p/sub{self.subdevice}/status"
         )
 
-        self._router = router
+        self._router = get_event_router()
         self._logger = getLogger(self.device_name)
 
         # Instantiate the monitoring task
@@ -43,28 +43,32 @@ class PcmMonitor:
             self.device_name,
             "stopped" if self.was_closed else "running",
         )
-        self.send_event(self.was_closed)
+        await self.send_event(self.was_closed)
 
         while True:
             if (state := self.is_closed()) != self.was_closed:
-                self.send_event(state)
+                await self.send_event(state)
                 self.was_closed = state
             await sleep(self.period)
 
-    def send_event(self, is_closed: bool) -> None:
+    async def send_event(self, is_closed: bool) -> None:
         """Send playback event"""
         if is_closed is True:
             self._logger.info(
                 "Detected stop of playback on %s PCM device", self.device_name
             )
-            self._router.fire_event(Event.PLAYBACK_STOP, f"{self.device} PCM device")
+            await self._router.fire_event(
+                Event.PLAYBACK_STOP, f"{self.device} PCM device"
+            )
         else:
             self._logger.info(
                 "Process '%s' started playback on %s PCM device",
                 self.get_playing_process(),
                 self.device_name,
             )
-            self._router.fire_event(Event.PLAYBACK_START, f"{self.device} PCM device")
+            await self._router.fire_event(
+                Event.PLAYBACK_START, f"{self.device} PCM device"
+            )
 
     def is_closed(self) -> bool:
         """Detects if this device is closed or not.

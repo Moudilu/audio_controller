@@ -5,6 +5,7 @@ import logging
 from argparse import ArgumentParser
 from asyncio import run, get_running_loop
 
+from .event_router import get_event_router
 from .devices.bluetoothController import BluetoothController
 from .devices.pcm_monitor import PcmMonitor
 from .devices.hk970 import HK970
@@ -30,6 +31,9 @@ def main() -> None:
         PcmMonitor("E30")
         HK970()
         bt = await BluetoothController()
+
+        # Initialization complete, start forwarding events
+        get_event_router().start_routing()
 
         # As of now, allow pairing when the service is started
         await bt.power_on()
