@@ -1,0 +1,13 @@
+[Unit]
+Description=Control and monitor audio output stack
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=audio_controller
+# Improves security by removing some unrequired privileges
+DynamicUser=true
+User=audio-controller
+
+[Install]
+WantedBy=multi-user.target
