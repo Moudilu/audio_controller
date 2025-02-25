@@ -1,5 +1,6 @@
 from asyncio import sleep, get_running_loop
 from logging import getLogger
+from os.path import isfile
 
 from psutil import NoSuchProcess, AccessDenied, Process
 
@@ -27,6 +28,13 @@ class PcmMonitor:
 
         self._router = get_event_router()
         self._logger = getLogger(self.device_name)
+
+        if not isfile(self._status_file):
+            self._logger.warning(
+                "Status file for %s does not exist. Is the device connected? Continue "
+                "normal operation, retrying to find file.",
+                self.device_name,
+            )
 
         # Instantiate the monitoring task
         get_running_loop().create_task(self.monitor())
@@ -76,10 +84,17 @@ class PcmMonitor:
         Returns true if the state of this device is closed.
         Otherwhise (running, closing, ...) returns false.
         """
-        with open(self._status_file, "r") as soundStatusfile:
-            status = soundStatusfile.readline().strip("\n")
-        self._logger.debug("%s status: %s", self.device_name, status)
-        return status == "closed"
+        try:
+            with open(self._status_file, "r") as soundStatusfile:
+                status = soundStatusfile.readline().strip("\n")
+            self._logger.debug("%s status: %s", self.device_name, status)
+            return status == "closed"
+        except FileNotFoundError:
+            self._logger.warning(
+                "Status file for %s not found. Device may be disconnected.",
+                self.device_name,
+            )
+            return True
 
     def get_playing_process(self) -> str:
         """Gets the process currently playing on this device
@@ -87,21 +102,27 @@ class PcmMonitor:
         :returns: Commandline of the process currently playing on this device.
                   'UNKNOWN' if nothing is playing.
         """
-        with open(self._status_file, "r") as soundStatusfile:
-            for line in soundStatusfile:
-                if line.startswith("owner_pid"):
-                    # Expect this line in the second line in format "owner_pid   : 615"
-                    try:
-                        tid = int(line.split(":")[-1].strip())
-                        cmd = Process(tid).cmdline()
-                        return " ".join(cmd)
-                    except ValueError:
-                        self._logger.exception(
-                            "Failed to read PID from line '%s'", line
-                        )
-                    except (NoSuchProcess, AccessDenied):
-                        self._logger.exception(
-                            "Failed to get info of process from line '%s'", line
-                        )
+        try:
+            with open(self._status_file, "r") as soundStatusfile:
+                for line in soundStatusfile:
+                    if line.startswith("owner_pid"):
+                        # Expect this line in the second line in format "owner_pid   : 615"
+                        try:
+                            tid = int(line.split(":")[-1].strip())
+                            cmd = Process(tid).cmdline()
+                            return " ".join(cmd)
+                        except ValueError:
+                            self._logger.exception(
+                                "Failed to read PID from line '%s'", line
+                            )
+                        except (NoSuchProcess, AccessDenied):
+                            self._logger.exception(
+                                "Failed to get info of process from line '%s'", line
+                            )
+        except FileNotFoundError:
+            self._logger.warning(
+                "Status file for %s not found. Device may be disconnected.",
+                self.device_name,
+            )
 
         return "UNKNOWN"
