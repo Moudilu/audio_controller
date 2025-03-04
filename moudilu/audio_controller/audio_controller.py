@@ -3,7 +3,7 @@
 import logging
 
 from argparse import ArgumentParser
-from asyncio import run, get_running_loop
+from asyncio import run, TaskGroup
 
 from .event_router import get_event_router
 from .devices.bluetoothController import BluetoothController
@@ -28,17 +28,15 @@ def main() -> None:
     logger = logging.getLogger()
 
     async def init():
-        # Instantiate all devices
-        PcmMonitor("E30")
-        HK970()
-        RemoteControl()
-        await BluetoothController()
+        async with TaskGroup() as tg:
+            # Instantiate all devices
+            PcmMonitor(tg, "E30")
+            HK970()
+            RemoteControl(tg)
+            await BluetoothController(tg)
 
-        # Initialization complete, start forwarding events
-        get_event_router().start_routing()
-
-        # handover to the event loop, let the magic happen
-        await get_running_loop().create_future()
+            # Initialization complete, start forwarding events
+            get_event_router().start_routing()
 
     # Run the loop
     run(init())

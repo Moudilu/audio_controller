@@ -1,4 +1,4 @@
-from asyncio import get_running_loop
+from asyncio import TaskGroup
 import logging
 from typing import Any, Generator
 
@@ -31,9 +31,10 @@ class BluetoothController:
 
     BLUEZ_DBUS_SERVICE_NAME = "org.bluez"
 
-    def __init__(self, hciNumber: int = 0):
+    def __init__(self, tg: TaskGroup, hciNumber: int = 0):
         self._logger = logging.getLogger(f"BT hci{hciNumber}")
         self._hci = hciNumber
+        self._tg = tg
 
     async def _init(self) -> "BluetoothController":
         """Some of the initialization has to be done async. Thus every object of this
@@ -65,10 +66,10 @@ class BluetoothController:
         match event:
             case Event.KEY_OPENCLOSE:
                 # Turn BT on
-                get_running_loop().create_task(self.power_on())
+                self._tg.create_task(self.power_on())
             case Event.KEY_OPENCLOSE_LONG:
                 # Turn BT on and make device discoverable
-                get_running_loop().create_task(self.start_discoverable())
+                self._tg.create_task(self.start_discoverable())
 
     async def power_on(self) -> None:
         self._logger.info("Turning adapter on")
@@ -185,7 +186,7 @@ class _NiceBluetoothAgent(ServiceInterface):
         self._controller._logger.warning(
             "Authorize device on path %s with UUID %s", device, uuid
         )
-        get_running_loop().create_task(self._controller.stop_discoverable())
+        self._controller._tg.create_task(self._controller.stop_discoverable())
 
     @method()
     def Release(self) -> None:

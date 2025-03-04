@@ -1,5 +1,5 @@
 from ast import Tuple
-from asyncio import get_running_loop
+from asyncio import TaskGroup
 from logging import getLogger
 from typing import Dict
 
@@ -31,7 +31,7 @@ class RemoteControl:
     LONGPRESS_THRESHOLD: float = 3.0
     """Time in seconds, after which a keypress is considered long."""
 
-    def __init__(self, device_number: int = 0) -> None:
+    def __init__(self, tg: TaskGroup, device_number: int = 0) -> None:
         self.device = InputDevice(f"/dev/input/event{device_number}")
         self.device_name = f"evdev{device_number}"
 
@@ -43,7 +43,7 @@ class RemoteControl:
         timestamp it had been pressed"""
 
         # Instantiate the monitoring task
-        self._read_keys_task = get_running_loop().create_task(self._read_keys())
+        tg.create_task(self._read_keys())
 
     async def _read_keys(self) -> None:
         self._logger.debug("Reading events from %s", self.device)
