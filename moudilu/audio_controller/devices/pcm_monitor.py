@@ -1,4 +1,4 @@
-from asyncio import sleep, get_running_loop
+from asyncio import sleep, TaskGroup
 from logging import getLogger
 from os.path import isfile
 
@@ -18,7 +18,7 @@ class PcmMonitor:
     was_closed: bool
     """Last read state of the PCM device"""
 
-    def __init__(self, device: str, subdevice: int = 0) -> None:
+    def __init__(self, tg: TaskGroup, device: str, subdevice: int = 0) -> None:
         self.device = device
         self.subdevice = subdevice
         self.device_name = f"{device}.{subdevice}"
@@ -37,7 +37,7 @@ class PcmMonitor:
             )
 
         # Instantiate the monitoring task
-        self._monitor_task = get_running_loop().create_task(self.monitor())
+        tg.create_task(self.monitor())
 
     async def monitor(self) -> None:
         """Runs infinite loop

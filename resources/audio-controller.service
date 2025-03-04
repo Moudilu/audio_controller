@@ -5,9 +5,12 @@ After=multi-user.target
 [Service]
 Type=simple
 ExecStart=audio_controller
+Restart=always
 # Improves security by removing some unrequired privileges
 DynamicUser=true
 User=audio-controller
+# Required for access to evdev devices
+SupplementaryGroups=input
 
 [Install]
 WantedBy=multi-user.target
