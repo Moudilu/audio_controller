@@ -37,7 +37,7 @@ class PcmMonitor:
             )
 
         # Instantiate the monitoring task
-        get_running_loop().create_task(self.monitor())
+        self._monitor_task = get_running_loop().create_task(self.monitor())
 
     async def monitor(self) -> None:
         """Runs infinite loop
@@ -106,7 +106,8 @@ class PcmMonitor:
             with open(self._status_file, "r") as soundStatusfile:
                 for line in soundStatusfile:
                     if line.startswith("owner_pid"):
-                        # Expect this line in the second line in format "owner_pid   : 615"
+                        # Expect this line in the second line in format
+                        # owner_pid   : 615
                         try:
                             tid = int(line.split(":")[-1].strip())
                             cmd = Process(tid).cmdline()

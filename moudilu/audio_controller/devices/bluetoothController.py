@@ -7,6 +7,8 @@ from dbus_next.constants import BusType
 from dbus_next.aio import MessageBus
 from dbus_next.service import ServiceInterface, method
 
+from ..event_router import get_event_router, Event
+
 
 class BluetoothController:
     """Class which controls the bluetooth adapter
@@ -53,7 +55,20 @@ class BluetoothController:
         # Start in a well defined state: Powered off
         if powered:
             await self.power_off()
+
+        # Register event handler
+        get_event_router().add_listener(self.process_events)
+
         return self
+
+    def process_events(self, event: Event, caler: str) -> None:
+        match event:
+            case Event.KEY_OPENCLOSE:
+                # Turn BT on
+                get_running_loop().create_task(self.power_on())
+            case Event.KEY_OPENCLOSE_LONG:
+                # Turn BT on and make device discoverable
+                get_running_loop().create_task(self.start_discoverable())
 
     async def power_on(self) -> None:
         self._logger.info("Turning adapter on")
@@ -68,7 +83,10 @@ class BluetoothController:
     ) -> None:
         """Set the adapter into the discoverable state
 
-        If discoverable, can be seen by other devices and connection be requested."""
+        If discoverable, can be seen by other devices and connection be requested.
+        If BT is not powered, first turn it on."""
+        if not await self._adapter.get_powered():
+            await self.power_on()
         self._logger.info(
             f"Adapter is discoverable for the next {self.DISCOVERABLE_TIMEOUT} seconds"
         )

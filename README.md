@@ -22,7 +22,6 @@ Note: Allocating the user statically is required as `DynamicUser` does not play 
 
 To update the project, run `sudo PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx upgrade git+https://github.com/Moudilu/audio_controller.git`.
 
-## Projects used
+## TODO
 
-- [python-evdev](https://python-evdev.readthedocs.io/en/latest/tutorial.html)
-- [python3-uhubctl](https://github.com/nbuchwitz/python3-uhubctl)
+- Turn on/off USB ADCs: [python3-uhubctl](https://github.com/nbuchwitz/python3-uhubctl)
