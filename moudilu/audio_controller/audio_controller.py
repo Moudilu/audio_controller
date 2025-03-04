@@ -9,6 +9,7 @@ from .event_router import get_event_router
 from .devices.bluetoothController import BluetoothController
 from .devices.pcm_monitor import PcmMonitor
 from .devices.hk970 import HK970
+from .devices.remote_control import RemoteControl
 
 
 def main() -> None:
@@ -30,14 +31,11 @@ def main() -> None:
         # Instantiate all devices
         PcmMonitor("E30")
         HK970()
-        bt = await BluetoothController()
+        RemoteControl()
+        await BluetoothController()
 
         # Initialization complete, start forwarding events
         get_event_router().start_routing()
-
-        # As of now, allow pairing when the service is started
-        await bt.power_on()
-        await bt.start_discoverable()
 
         # handover to the event loop, let the magic happen
         await get_running_loop().create_future()

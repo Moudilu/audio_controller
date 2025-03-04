@@ -8,6 +8,8 @@ from typing import Callable
 class Event(StrEnum):
     PLAYBACK_START = auto()
     PLAYBACK_STOP = auto()
+    KEY_OPENCLOSE = auto()
+    KEY_OPENCLOSE_LONG = auto()
 
 
 def get_event_router() -> "get_event_router._EventRouter":

@@ -37,7 +37,7 @@ class PcmMonitor:
             )
 
         # Instantiate the monitoring task
-        get_running_loop().create_task(self.monitor())
+        self._monitor_task = get_running_loop().create_task(self.monitor())
 
     async def monitor(self) -> None:
         """Runs infinite loop
