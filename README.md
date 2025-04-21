@@ -14,6 +14,9 @@ Install the required user and service:
 ```bash
 sudo useradd -r audio-controller
 sudo wget -O /etc/systemd/system/audio-controller.service https://github.com/Moudilu/audio_controller/raw/refs/heads/main/resources/audio-controller.service
+sudo wget -O /etc/default/audio-controller https://github.com/Moudilu/audio_controller/raw/refs/heads/main/resources/audio-controller
+# Edit the default options to match your requirements
+sudo editor /etc/default/audio-controller
 sudo systemctl daemon-reload
 sudo systemctl enable --now audio-controller
 ```
