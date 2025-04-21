@@ -6,10 +6,6 @@ from argparse import ArgumentParser
 from asyncio import run, TaskGroup
 
 from .event_router import get_event_router
-from .devices.bluetoothController import BluetoothController
-from .devices.pcm_monitor import PcmMonitor
-from .devices.hk970 import HK970
-from .devices.remote_control import RemoteControl
 
 
 def main() -> None:
@@ -35,6 +31,13 @@ def main() -> None:
         action="store_true",
         help="Enable Bluetooth controller",
     )
+    parser.add_argument(
+        "--api",
+        action="append",
+        default=[],
+        type=int,
+        help="Serve the REST API on the specified port.",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=args.loglevel.upper())
@@ -45,13 +48,25 @@ def main() -> None:
         async with TaskGroup() as tg:
             # Instantiate all devices
             for pcm in args.pcm:
+                from .devices.pcm_monitor import PcmMonitor
+
                 PcmMonitor(tg, pcm)
             if args.hk970:
+                from .devices.hk970 import HK970
+
                 HK970()
             if args.rc:
+                from .devices.remote_control import RemoteControl
+
                 RemoteControl(tg)
             if args.bt:
+                from .devices.bluetoothController import BluetoothController
+
                 await BluetoothController(tg)
+            if args.api:
+                from .devices.rest_api import RestApi
+
+                RestApi(tg, args.api)
 
             # Initialization complete, start forwarding events
             get_event_router().start_routing()

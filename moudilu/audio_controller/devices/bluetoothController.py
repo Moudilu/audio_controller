@@ -64,13 +64,16 @@ class BluetoothController:
 
     def process_events(self, event: Event, caler: str) -> None:
         match event:
-            case Event.KEY_OPENCLOSE:
+            case Event.KEY_OPENCLOSE | Event.API_BLUETOOTH_ON:
                 # Turn BT on
                 self._tg.create_task(self.power_on())
-            case Event.KEY_OPENCLOSE_LONG:
+            case Event.KEY_OPENCLOSE_LONG | Event.API_BLUETOOTH_DISCOVERABLE:
                 # Turn BT on and make device discoverable
                 self._agent.start_pairing_mode()
                 self._tg.create_task(self.power_on())
+            case Event.API_BLUETOOTH_OFF:
+                # Turn BT off
+                self._tg.create_task(self.power_off())
 
     async def power_on(self) -> None:
         """Power the BT adapter and make it temporarily discoverable
