@@ -1,10 +1,11 @@
 [Unit]
 Description=Control and monitor audio output stack
-After=multi-user.target
+After=lircd bluetooth.target
 
 [Service]
 Type=simple
-ExecStart=audio_controller
+EnvironmentFile=/etc/default/audio-controller
+ExecStart=audio_controller $ARGS
 Restart=always
 # Improves security by removing some unrequired privileges
 DynamicUser=true

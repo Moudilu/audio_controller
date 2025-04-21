@@ -21,6 +21,20 @@ def main() -> None:
         help="One of debug, info, warning, error. Default=info",
         choices=["debug", "info", "warning", "error"],
     )
+    parser.add_argument("--pcm", action="append", default=[], help="Enable PCM monitor")
+    parser.add_argument(
+        "--hk970", action="store_true", help="Control HK970 via infrared"
+    )
+    parser.add_argument(
+        "--rc",
+        action="store_true",
+        help="Receive and process remote control inputs",
+    )
+    parser.add_argument(
+        "--bt",
+        action="store_true",
+        help="Enable Bluetooth controller",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=args.loglevel.upper())
@@ -30,10 +44,14 @@ def main() -> None:
     async def init():
         async with TaskGroup() as tg:
             # Instantiate all devices
-            PcmMonitor(tg, "E30")
-            HK970()
-            RemoteControl(tg)
-            await BluetoothController(tg)
+            for pcm in args.pcm:
+                PcmMonitor(tg, pcm)
+            if args.hk970:
+                HK970()
+            if args.rc:
+                RemoteControl(tg)
+            if args.bt:
+                await BluetoothController(tg)
 
             # Initialization complete, start forwarding events
             get_event_router().start_routing()

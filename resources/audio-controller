@@ -1,0 +1,5 @@
+# The environment variables in this file are loaded by the audio-controller Service.
+# Configure the desired arguments for the audio_controller here.  In particular, the used devices must be specified.
+# Some examples are given below. To get help on the available arguments, run `audio_controller --help`.
+# ARGS="--pcm E30 --hk970 --rc --bt"
+# ARGS="--pcm IQaudIODAC --rc --bt"
