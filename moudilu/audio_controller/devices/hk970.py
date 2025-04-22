@@ -22,7 +22,8 @@ class HK970:
     def __init__(self) -> None:
         self._lirc = Client()
 
-        get_event_router().add_listener(self.process_events)
+        get_event_router().subscribe((Event.PLAYBACK_START,), self.playback_start)
+        get_event_router().subscribe((Event.PLAYBACK_STOP,), self.playback_stop)
 
         self._logger = getLogger("HK970")
 
@@ -30,18 +31,15 @@ class HK970:
         # If stream is currently running, amp will be restarted soon after by an event
         self.power_off()
 
-    def process_events(self, event: Event, caller: str) -> None:
-        match event:
-            case Event.PLAYBACK_START:
-                if self._shutdown_timer is not None:
-                    self._shutdown_timer.cancel()
-                self.power_on()
-            case Event.PLAYBACK_STOP:
-                self._shutdown_timer = get_running_loop().call_later(
-                    self.SHUTDOWN_DELAY, self.power_off
-                )
-            case _:
-                pass
+    def playback_stop(self):
+        self._shutdown_timer = get_running_loop().call_later(
+            self.SHUTDOWN_DELAY, self.power_off
+        )
+
+    def playback_start(self):
+        if self._shutdown_timer is not None:
+            self._shutdown_timer.cancel()
+        self.power_on()
 
     def power_on(self) -> None:
         self._lirc.send_once("HK970", "KEY_POWER")

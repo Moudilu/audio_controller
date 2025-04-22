@@ -1,8 +1,9 @@
 from asyncio import Future, get_running_loop
+from collections import defaultdict
 from enum import StrEnum, auto
 from logging import Logger
 import logging
-from typing import Callable
+from typing import Callable, Dict, Iterable
 
 
 class Event(StrEnum):
@@ -22,16 +23,22 @@ def get_event_router() -> "get_event_router._EventRouter":
     start routing of events."""
 
     class _EventRouter:
-        _callbacks: set[Callable[[Event, str], None]] = set()
+        _callbacks: Dict[Event, set[Callable[[Event, str], None]]] = defaultdict(lambda: set())  # type: ignore
+        """Dictionary of all callbacks to be called on specific events"""
 
         def __init__(self) -> None:
             self._logger: Logger = logging.getLogger("EventRouter")
             self._start_routing: Future = get_running_loop().create_future()
 
-        def add_listener(self, callback: Callable[[Event, str], None]) -> None:
-            """Register callback function to be forwarded any event"""
-            self._callbacks.add(callback)
-            self._logger.debug("Add event callback %s", callback)
+        def subscribe(
+            self, events: Iterable[Event], callback: Callable[[Event, str], None]
+        ) -> None:
+            """Register callback function to be forwarded the specified events"""
+            for event in events:
+                self._callbacks[event].add(callback)
+                self._logger.debug(
+                    "Add event callback %s for event %s", callback, event
+                )
 
         async def fire_event(self, event: Event, caller: str) -> None:
             """Broadcast an event to all listeners
@@ -40,12 +47,12 @@ def get_event_router() -> "get_event_router._EventRouter":
             : param caller: String representing who fired the event
             """
             await self._start_routing
-            for c in self._callbacks:
+            for c in self._callbacks[event]:
                 c(event, caller)
             self._logger.debug(
                 "Called %i callbacks with event %s from %s",
-                len(self._callbacks),
-                event.name,
+                len(self._callbacks[event]),
+                event,
                 caller,
             )
 

@@ -58,22 +58,25 @@ class BluetoothController:
             await self.power_off()
 
         # Register event handler
-        get_event_router().add_listener(self.process_events)
+        get_event_router().subscribe(
+            (Event.KEY_OPENCLOSE, Event.API_BLUETOOTH_ON),
+            lambda e, c: self._tg.create_task(self.power_on()),
+        )
+        get_event_router().subscribe(
+            (Event.KEY_OPENCLOSE_LONG, Event.API_BLUETOOTH_DISCOVERABLE),
+            lambda e, c: self._tg.create_task(self.make_discoverable()),
+        )
+        get_event_router().subscribe(
+            (Event.API_BLUETOOTH_OFF,),
+            lambda e, c: self._tg.create_task(self.power_off()),
+        )
 
         return self
 
-    def process_events(self, event: Event, caler: str) -> None:
-        match event:
-            case Event.KEY_OPENCLOSE | Event.API_BLUETOOTH_ON:
-                # Turn BT on
-                self._tg.create_task(self.power_on())
-            case Event.KEY_OPENCLOSE_LONG | Event.API_BLUETOOTH_DISCOVERABLE:
-                # Turn BT on and make device discoverable
-                self._agent.start_pairing_mode()
-                self._tg.create_task(self.power_on())
-            case Event.API_BLUETOOTH_OFF:
-                # Turn BT off
-                self._tg.create_task(self.power_off())
+    async def make_discoverable(self) -> None:
+        """Turn BT on and make device discoverable"""
+        self._agent.start_pairing_mode()
+        await self.power_on()
 
     async def power_on(self) -> None:
         """Power the BT adapter and make it temporarily discoverable
