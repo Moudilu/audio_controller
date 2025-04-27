@@ -23,7 +23,7 @@ def get_event_router() -> "get_event_router._EventRouter":
     start routing of events."""
 
     class _EventRouter:
-        _callbacks: Dict[Event, set[Callable[[Event, str], None]]] = defaultdict(lambda: set())  # type: ignore
+        _callbacks: Dict[Event, set[Callable[[Event, str], None]]] = defaultdict(lambda: set())  # type: ignore # noqa: E501
         """Dictionary of all callbacks to be called on specific events"""
 
         def __init__(self) -> None:

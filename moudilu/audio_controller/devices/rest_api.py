@@ -63,8 +63,11 @@ class RestApi:
         """
         # For each port, create a server both on IPv4 and IPv6
         for ip, port in itertools.product(("::", "0.0.0.0"), ports):
-            # This instantiates a server programmatically. Note that this is not the recommended way to start a FastAPI app (which would be to invoke it via the fastapi command)
-            # The server is started with the default asyncio implementation instead of the faster uvloop.
+            # This instantiates a server programmatically. Note that this is not the
+            # recommended way to start a FastAPI app (which would be to invoke it via
+            # the fastapi command)
+            # The server is started with the default asyncio implementation instead of
+            # the faster uvloop.
             config = uvicorn.Config(
                 __name__ + ":app",
                 host=ip,

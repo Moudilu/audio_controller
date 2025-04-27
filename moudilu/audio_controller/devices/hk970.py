@@ -31,12 +31,12 @@ class HK970:
         # If stream is currently running, amp will be restarted soon after by an event
         self.power_off()
 
-    def playback_stop(self):
+    def playback_stop(self, event: Event, caller: str) -> None:
         self._shutdown_timer = get_running_loop().call_later(
             self.SHUTDOWN_DELAY, self.power_off
         )
 
-    def playback_start(self):
+    def playback_start(self, event: Event, caller: str) -> None:
         if self._shutdown_timer is not None:
             self._shutdown_timer.cancel()
         self.power_on()
